@@ -187,33 +187,6 @@ This generates:
 
 ---
 
-## 🌐 Deployment on Render
-
-### Step 1: Push to GitHub
-```bash
-git add .
-git commit -m "Reel Recommendation Engine"
-git push origin main
-```
-
-### Step 2: Connect to Render
-1. Go to https://render.com
-2. Sign in with GitHub
-3. Click **"New +"** → **"Web Service"**
-4. Select your repository
-5. Configure:
-   - **Name:** reel-recommendation-engine
-   - **Environment:** Python 3
-   - **Build Command:** `pip install -r requirements.txt`
-   - **Start Command:** `gunicorn app:app`
-
-### Step 3: Deploy
-- Click **"Create Web Service"**
-- Wait 5-10 minutes for deployment
-- Your app will be live at: `https://reel-recommendation-engine.onrender.com`
-
----
-
 ## 💾 Data Format
 
 ### Products CSV (data/products.csv)
@@ -232,37 +205,6 @@ product_id,name,category,description,price
 
 ---
 
-## 📈 Performance Notes
-
-- **First Request:** 2-3 minutes (generates content_similarity.pkl)
-- **Subsequent Requests:** < 100ms
-- **Memory Usage:** ~500MB (Render free tier compatible)
-- **Model Generation Time:** 5-7 minutes during deployment build
-
----
-
-## 🔐 Environment Variables (Optional)
-
-Create `.env` file for customization:
-```bash
-FLASK_ENV=production
-DEBUG=False
-PORT=5000
-```
-
----
-
-## 🐛 Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| Models not found | Run `python app.py` - they auto-generate |
-| App crashes on startup | Check if pickle files exist in `models/` |
-| Slow first request | Normal - similarity matrix generating |
-| Port already in use | Change PORT in .env or use `python app.py --port 8000` |
-
----
-
 ## 📝 Project Status
 
 - ✅ Content-based filtering implemented
@@ -273,46 +215,6 @@ PORT=5000
 - ✅ Production-ready
 
 ---
-
-## 🎯 Future Enhancements
-
-- [ ] Add matrix factorization for better CF
-- [ ] Implement hybrid approach with weighted scoring
-- [ ] Add user feedback loop for model improvement
-- [ ] Create admin dashboard for model monitoring
-- [ ] Add caching layer (Redis) for performance
-- [ ] Implement A/B testing framework
-- [ ] Add recommendation logging for analytics
-- [ ] Mobile app integration
-
----
-
-## 👨‍💻 Development Notes
-
-### Adding New Products
-1. Update `data/products.csv`
-2. Retrain content-based model (run notebook)
-3. Deploy new `content_products.pkl`
-
-### Retraining Models
-- Retrain monthly or when new data arrives
-- Both notebooks can be run independently
-- Use Jupyter for experimentation
-
----
-
-## 📞 Support & Contribution
-
-For issues, feature requests, or contributions:
-1. Fork the repository
-2. Create a feature branch
-3. Submit a pull request
-
----
-
-## 📄 License
-
-This project is open source and available under the MIT License.
 
 ---
 
