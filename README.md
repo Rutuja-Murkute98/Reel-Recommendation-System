@@ -216,8 +216,6 @@ product_id,name,category,description,price
 
 ---
 
----
-
 ## 🙏 Acknowledgments
 
 - Dataset: E-commerce reel interaction data
