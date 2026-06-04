@@ -1,19 +1,55 @@
 from flask import Flask, render_template, request
 import pickle
+import os
+import pandas as pd
+import numpy as np
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 app = Flask(__name__)
+
+# ==========================
+# HELPER FUNCTION TO GENERATE MODELS
+# ==========================
+
+def generate_content_similarity():
+    """Generate content_similarity if it doesn't exist"""
+    similarity_path = "models/content_similarity.pkl"
+    
+    if not os.path.exists(similarity_path):
+        print("Generating content_similarity.pkl...")
+        try:
+            content_products = pickle.load(open("models/content_products.pkl", "rb"))
+            content_products['features'] = (
+                content_products['name'] + ' ' + 
+                content_products['category'] + ' ' + 
+                content_products['description']
+            )
+            vectorizer = TfidfVectorizer(stop_words='english', max_features=100)
+            tfidf_matrix = vectorizer.fit_transform(content_products['features'])
+            similarity = cosine_similarity(tfidf_matrix)
+            
+            with open(similarity_path, 'wb') as f:
+                pickle.dump(similarity, f)
+            print("✓ content_similarity.pkl generated successfully!")
+            return similarity
+        except Exception as e:
+            print(f"Error generating similarity: {e}")
+            return None
+    else:
+        return pickle.load(open(similarity_path, "rb"))
 
 # ==========================
 # LOAD MODELS
 # ==========================
 
+os.makedirs("models", exist_ok=True)
+
 content_products = pickle.load(
     open("models/content_products.pkl", "rb")
 )
 
-content_similarity = pickle.load(
-    open("models/content_similarity.pkl", "rb")
-)
+content_similarity = generate_content_similarity()
 
 user_similarity_df = pickle.load(
     open("models/user_similarity.pkl", "rb")

@@ -31,3 +31,12 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Large model files (will be generated dynamically)
+models/content_similarity.pkl
+
+# Logs
+*.log
+
+# Large Model Files (excluded from git but needed for production)
+models/*.pkl
