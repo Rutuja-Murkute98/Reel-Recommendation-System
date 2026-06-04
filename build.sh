@@ -1,13 +1,13 @@
 #!/bin/bash
+set -e
 
-# Build script for Render deployment
-# Install dependencies with --only-binary to avoid compilation
-
-echo "Installing dependencies with pre-built wheels only..."
+echo "Upgrading Python packaging tools..."
 pip install --upgrade pip setuptools wheel
-pip install --only-binary :all: -r requirements.txt 2>/dev/null || pip install -r requirements.txt
+
+echo "Installing Python dependencies..."
+pip install -r requirements.txt
 
 echo "Creating models directory..."
 mkdir -p models
 
-echo "✓ Build complete!"
+echo "Build complete."
