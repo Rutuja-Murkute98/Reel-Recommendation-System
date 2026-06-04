@@ -2,5 +2,6 @@ services:
   - type: web
     name: reel-recommendation-engine
     env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    plan: free
+    buildCommand: bash build.sh
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
