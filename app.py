@@ -1,63 +1,90 @@
 from flask import Flask, render_template, request
-import pickle
 import os
+import pickle
+
 import pandas as pd
-import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+
 
 app = Flask(__name__)
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODELS_DIR = os.path.join(BASE_DIR, "models")
+DATA_DIR = os.path.join(BASE_DIR, "data")
+USER_SIMILARITY_PATH = os.path.join(MODELS_DIR, "user_similarity.pkl")
+USER_REEL_MATRIX_PATH = os.path.join(MODELS_DIR, "user_reel_matrix.pkl")
+REEL_DATA_PATH = os.path.join(DATA_DIR, "reel_recommendation_dataset_1000_rows.csv")
+
+
 # ==========================
-# HELPER FUNCTION TO GENERATE MODELS
+# HELPER FUNCTIONS TO LOAD / GENERATE MODELS
 # ==========================
 
-def generate_content_similarity():
-    """Generate content_similarity if it doesn't exist"""
-    similarity_path = "models/content_similarity.pkl"
-    
-    if not os.path.exists(similarity_path):
-        print("Generating content_similarity.pkl...")
-        try:
-            content_products = pickle.load(open("models/content_products.pkl", "rb"))
-            content_products['features'] = (
-                content_products['name'] + ' ' + 
-                content_products['category'] + ' ' + 
-                content_products['description']
-            )
-            vectorizer = TfidfVectorizer(stop_words='english', max_features=100)
-            tfidf_matrix = vectorizer.fit_transform(content_products['features'])
-            similarity = cosine_similarity(tfidf_matrix)
-            
-            with open(similarity_path, 'wb') as f:
-                pickle.dump(similarity, f)
-            print("✓ content_similarity.pkl generated successfully!")
-            return similarity
-        except Exception as e:
-            print(f"Error generating similarity: {e}")
-            return None
-    else:
-        return pickle.load(open(similarity_path, "rb"))
+def generate_collaborative_models():
+    """Generate collaborative filtering models from the CSV dataset."""
+    if not os.path.exists(REEL_DATA_PATH):
+        raise FileNotFoundError(f"Required dataset not found: {REEL_DATA_PATH}")
+
+    print("Generating collaborative recommendation models...")
+    df = pd.read_csv(REEL_DATA_PATH)
+
+    df["interaction_score"] = (
+        (df["watch_percentage"] * 0.1)
+        + (df["liked"] * 3)
+        + (df["shared"] * 5)
+        + (df["saved"] * 4)
+        + (df["clicked"] * 2)
+        + (df["purchased"] * 10)
+    )
+
+    user_reel_matrix = df.pivot_table(
+        index="user_id",
+        columns="reel_id",
+        values="interaction_score",
+        fill_value=0,
+    )
+
+    user_similarity = cosine_similarity(user_reel_matrix)
+    user_similarity_df = pd.DataFrame(
+        user_similarity,
+        index=user_reel_matrix.index,
+        columns=user_reel_matrix.index,
+    )
+
+    os.makedirs(MODELS_DIR, exist_ok=True)
+
+    with open(USER_SIMILARITY_PATH, "wb") as f:
+        pickle.dump(user_similarity_df, f)
+
+    with open(USER_REEL_MATRIX_PATH, "wb") as f:
+        pickle.dump(user_reel_matrix, f)
+
+    print("Collaborative recommendation models generated successfully.")
+    return user_similarity_df, user_reel_matrix
+
+
+def load_collaborative_models():
+    """Load models from disk, or generate them if they are not committed."""
+    if (
+        not os.path.exists(USER_SIMILARITY_PATH)
+        or not os.path.exists(USER_REEL_MATRIX_PATH)
+    ):
+        return generate_collaborative_models()
+
+    with open(USER_SIMILARITY_PATH, "rb") as f:
+        user_similarity_df = pickle.load(f)
+
+    with open(USER_REEL_MATRIX_PATH, "rb") as f:
+        user_reel_matrix = pickle.load(f)
+
+    return user_similarity_df, user_reel_matrix
+
 
 # ==========================
 # LOAD MODELS
 # ==========================
 
-os.makedirs("models", exist_ok=True)
-
-content_products = pickle.load(
-    open("models/content_products.pkl", "rb")
-)
-
-content_similarity = generate_content_similarity()
-
-user_similarity_df = pickle.load(
-    open("models/user_similarity.pkl", "rb")
-)
-
-user_reel_matrix = pickle.load(
-    open("models/user_reel_matrix.pkl", "rb")
-)
+user_similarity_df, user_reel_matrix = load_collaborative_models()
 
 
 # ==========================
